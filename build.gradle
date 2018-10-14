@@ -1,0 +1,77 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.2.71'
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    maven { url "https://dl.bintray.com/kotlin/ktor" }
+    maven { url 'https://jitpack.io' }
+}
+
+group 'jdbcat.examples'
+version '1.0-SNAPSHOT'
+
+configurations {
+    ktlint
+}
+
+sourceCompatibility = 1.8
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+kotlin {
+    experimental { coroutines "enable" }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+    implementation group: "com.github.mobiletoly", name: "jdbcat-core", version: "master-SNAPSHOT", changing: true
+    implementation "io.ktor:ktor-server-netty:$ktor_version"
+    implementation "io.ktor:ktor-jackson:$ktor_version"
+    implementation "org.koin:koin-ktor:$koin_version"
+    implementation "org.koin:koin-logger-slf4j:$koin_version"
+    implementation "com.zaxxer:HikariCP:$hikaricp_version"
+    implementation "io.github.microutils:kotlin-logging:$mu_logging_version"
+    implementation "ch.qos.logback:logback-classic:$logback_version"
+    implementation "org.postgresql:postgresql:$postgres_driver_version"
+
+    testCompile "org.testcontainers:postgresql:$testcontainers_version"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    ktlint "com.github.shyiko:ktlint:0.29.0"
+}
+
+// --- Run "./gradle shadowJar" to generate fat jar with all dependencies
+shadowJar {
+    baseName = 'marketplace-backend'
+    classifier = null
+    version = null
+}
+
+// --- ktlint configuration --
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
+    classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
+    args = ["src/**/*.kt"]
+    // to generate report in checkstyle format prepend following args:
+    // "--reporter=plain", "--reporter=checkstyle,output=${buildDir}/ktlint.xml"
+    // see https://github.com/shyiko/ktlint#usage for more
+}
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
+    classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
+    args = ["-F", "src/**/*.kt"]
+}
+check.dependsOn ktlint
