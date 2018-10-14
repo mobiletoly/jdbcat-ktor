@@ -2,6 +2,9 @@ package jdbcat.ktor.example
 
 import io.ktor.http.HttpStatusCode
 
+/**
+ * Inherit all application-specific exceptions from this class.
+ */
 open class AppGenericException(
     val httpStatusCode: HttpStatusCode,
     val errorMessage: String

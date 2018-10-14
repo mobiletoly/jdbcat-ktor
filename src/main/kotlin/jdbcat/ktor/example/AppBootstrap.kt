@@ -13,12 +13,16 @@ import jdbcat.ktor.example.db.model.Departments
 import jdbcat.ktor.example.db.model.Employee
 import jdbcat.ktor.example.db.model.Employees
 import kotlinx.coroutines.experimental.runBlocking
+import mu.KotlinLogging
 import org.koin.ktor.ext.inject
 import org.koin.ktor.ext.installKoin
 import org.koin.log.Logger.SLF4JLogger
 import java.util.Date
 import javax.sql.DataSource
 
+private val logger = KotlinLogging.logger { }
+
+// Perform application-wide bootstrap
 fun Application.bootstrap() {
 
     // Add Koin DI support for Ktor
@@ -30,14 +34,14 @@ fun Application.bootstrap() {
     bootstrapDatabase()
 }
 
+// Create tables and initialize data if necessary
 fun Application.bootstrapDatabase() = runBlocking {
     val dataSource by inject<DataSource>()
     val departmentDao by inject<DepartmentDao>()
     val employeeDao by inject<EmployeeDao>()
 
-    // Comment out if you don't want for tables to be recreated and reinitialized with dummy data
-    // on every start
     dataSource.tx {
+        // TODO Comment out this block if you don't want for tables to be recreated and reinitialized every time
         employeeDao.dropTableIfExists()
         departmentDao.dropTableIfExists()
         departmentDao.createTableIfNotExists()
@@ -47,11 +51,13 @@ fun Application.bootstrapDatabase() = runBlocking {
     }
 }
 
-private suspend fun createInitialDepartments(dataSource: DataSource) {
+// Copy some dummy data into Departments table
+private suspend fun createInitialDepartments(dataSource: DataSource) = dataSource.txRequired { connection ->
+    logger.info { "Create dummy Department records" }
+
     val insertDepartmentTemplate = sqlTemplate(Departments) {
         "INSERT INTO $tableName (${columns.sqlNames}) VALUES (${columns.sqlValues})"
     }
-
     val departments = listOf(
         Department(code = "SEA", name = "Seattle's Office", countryCode = "USA", city = "Seattle",
             comments = "Headquarter and R&D", dateCreated = Date(Date().time - 99999999999L)),
@@ -63,23 +69,22 @@ private suspend fun createInitialDepartments(dataSource: DataSource) {
             comments = "Just for fun :)", dateCreated = Date(Date().time - 33333333333L))
     )
     // TODO Add batch functionality
-    dataSource.txRequired { connection ->
-        for (department in departments) {
-            val stmt = insertDepartmentTemplate.prepareStatement(connection) {
-                it[Departments.code] = department.code
-                it[Departments.name] = department.name
-                it[Departments.countryCode] = department.countryCode
-                it[Departments.city] = department.city
-                it[Departments.comments] = department.comments
-                it[Departments.dateCreated] = department.dateCreated!!
-            }
-            println("* Add Department SQL: $stmt")
-            stmt.executeUpdate()
+    for (department in departments) {
+        val stmt = insertDepartmentTemplate.prepareStatement(connection) {
+            it[Departments.code] = department.code
+            it[Departments.name] = department.name
+            it[Departments.countryCode] = department.countryCode
+            it[Departments.city] = department.city
+            it[Departments.comments] = department.comments
+            it[Departments.dateCreated] = department.dateCreated!!
         }
+        logger.debug { "[Add Department] SQL: $stmt" }
+        stmt.executeUpdate()
     }
 }
 
-private suspend fun createInitialEmployees(dataSource: DataSource) {
+// Copy some dummy data into Employees table
+private suspend fun createInitialEmployees(dataSource: DataSource) = dataSource.txRequired { connection ->
     val insertEmployeeTemplate = sqlTemplate(Employees) {
         "INSERT INTO $tableName (${(columns - id).sqlNames}) VALUES (${(columns - id).sqlValues})"
     }
@@ -96,18 +101,16 @@ private suspend fun createInitialEmployees(dataSource: DataSource) {
             comments = "DJ", dateCreated = Date(Date().time - 25555555555L))
     )
     // TODO Add batch functionality
-    dataSource.txRequired { connection ->
-        for (employee in employees) {
-            val stmt = insertEmployeeTemplate.prepareStatement(connection) {
-                it[Employees.firstName] = employee.firstName
-                it[Employees.lastName] = employee.lastName
-                it[Employees.age] = employee.age
-                it[Employees.departmentCode] = employee.departmentCode
-                it[Employees.comments] = employee.comments
-                it[Employees.dateCreated] = employee.dateCreated!!
-            }
-            println("* Add Employee SQL: $stmt")
-            stmt.executeUpdate()
+    for (employee in employees) {
+        val stmt = insertEmployeeTemplate.prepareStatement(connection) {
+            it[Employees.firstName] = employee.firstName
+            it[Employees.lastName] = employee.lastName
+            it[Employees.age] = employee.age
+            it[Employees.departmentCode] = employee.departmentCode
+            it[Employees.comments] = employee.comments
+            it[Employees.dateCreated] = employee.dateCreated!!
         }
+        logger.debug { "[Add Employee] SQL: $stmt" }
+        stmt.executeUpdate()
     }
 }

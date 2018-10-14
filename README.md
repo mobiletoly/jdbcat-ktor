@@ -18,6 +18,7 @@ You are landed to the right repository if you want to take a look at REST servic
 - **PostgreSQL** for database: https://www.postgresql.org/
 - **kotlin-logging** for logging: https://github.com/MicroUtils/kotlin-logging
 - **HOCON** for application configuration: https://github.com/lightbend/config/
+- **jackson** for JSON serialization/deserialization: https://github.com/FasterXML/jacksons
 
 and for testing:
 - **Testcontainers** for unit testing with a real database in Docker: https://github.com/testcontainers/testcontainers-java

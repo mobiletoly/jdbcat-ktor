@@ -33,7 +33,7 @@ data class Employee(
     val comments: String?,
     val dateCreated: Date?
 ) {
-    infix fun copyFieldsTo(builder: ColumnValueBuilder) {
+    fun copyFieldsTo(builder: ColumnValueBuilder) {
         if (id != null) {
             builder[Employees.id] = id
         }

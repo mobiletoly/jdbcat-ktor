@@ -20,18 +20,18 @@ import javax.sql.DataSource
  *
  * Example:
  * val departmentDao = DepartmentDao(dataSource)
- * val addedDepartment = dataSource.txAsync { connection ->
+ * val updatedDepartment = dataSource.txAsync { connection ->
  *     departmentDao.insertOrUpdate(department = departmentToUpdate)
  * }
- * println(addedDepartment)
  *
- * -- Do not put your business logic here, DAO should stay as light as possible.
+ * -- Do not put your business logic in this class, DAO should stay as light as possible.
  * -- For anything more complicated (or when logic requires few tables to interact) - use "service" layer.
  */
 class DepartmentDao(private val dataSource: DataSource) {
 
     private val logger = KotlinLogging.logger { }
 
+    // txRequired enforces usage of transaction that needs to be started by caller
     suspend fun createTableIfNotExists() = dataSource.txRequired { connection ->
         val stmt = createTableIfNotExistsSqlTemplate.prepareStatement(connection)
         logger.debug { "createTableIfNotExists(): $stmt" }
@@ -44,6 +44,9 @@ class DepartmentDao(private val dataSource: DataSource) {
         stmt.executeUpdate()
     }
 
+    // upsert functionality
+    // if Department with this [Department.code] already exists - it will be updated
+    // if it does not exist yet - it will be created.
     suspend fun insertOrUpdate(department: Department) = dataSource.txRequired { connection ->
         val stmt = upsertDepartmentSqlTemplate.prepareStatement(
             connection = connection,

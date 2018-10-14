@@ -8,8 +8,8 @@ import org.koin.dsl.module.module
 import javax.sql.DataSource
 
 /**
- * Dependencies. We use Koin framework for dependency injections:
- * https://insert-koin.io/
+ * This is a heart of all dependency injection in this app.
+ * We use Koin framework for dependency injections - https://insert-koin.io/
  */
 val appModule = module(createOnStart = true) {
 

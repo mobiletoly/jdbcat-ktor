@@ -30,11 +30,14 @@ const val serviceApiVersionV1 = "api/v1"
 
 private val logger = KotlinLogging.logger { }
 
-// This method is called by Ktor and this entry point is configured in resources/application.conf
+/**
+ * Application's ENTRY POINT.
+ * This method is called by Ktor and this entry point is configured in /resources/application.conf
+ */
 @Suppress("unused")
 fun Application.main() {
 
-    // Bootstrap extractFrom jdbcat.ktor.example.bootstrap.kt file
+    // Initial bootstrap
     // Performs initial initialization of dependency injection, database tables etc.
     bootstrap()
 
@@ -46,18 +49,18 @@ fun Application.main() {
     // in a header and in case of error, user can provide us with a call request id (let's say we might
     // print it on a screen or in JavaScript console) and we could track the entire execution path even
     // in a very busy logs (e.g. on file system or in Splunk).
-    // In order to print call request id with use %X{mdc-callid} specifier in resources/logback.xml
-    // Unique id will be generated in form of "callid-UUID"
+    // In order to print call request id we use %X{mdc-callid} specifier in resources/logback.xml
     install(CallLogging) {
         callIdMdc("mdc-callid")
     }
     install(CallId) {
+        // Unique id will be generated in form of "callid-UUID" for a CallLogging feature described above
         generate {
             "callid-${UUID.randomUUID()}"
         }
     }
 
-    // Some frameworks such as Angular require proper CORS configuration
+    // Some frameworks such as Angular require additional CORS configuration
     install(CORS) {
         method(HttpMethod.Options)
         method(HttpMethod.Put)
@@ -70,11 +73,11 @@ fun Application.main() {
 
     // Content conversions - here we setup serialization and deserialization of JSON objects
     install(ContentNegotiation) {
-        // We use Jackson: https://github.com/FasterXML/jackson
+        // We use Jackson for JSON: https://github.com/FasterXML/jackson
         jackson {
             // Use ISO-8601 date/time format
             disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-            // Pretty print
+            // Pretty print of JSON output
             enable(SerializationFeature.INDENT_OUTPUT)
         }
     }
@@ -82,17 +85,18 @@ fun Application.main() {
     // Return proper HTTP error: https://ktor.io/features/status-pages.html
     install(StatusPages) {
         // setup exception handlers
-        // Application should be able to throw an exception and specify corresponding HTTP code
+        // We have introduced application-specific exception - AppGenericException allowing us
+        // to specify HTTP status code to be returned to HTTP REST client.
         exception<AppGenericException> { ex ->
             logger.error(ex) { "Application exception to be returned to a caller" }
             call.respond(ex.httpStatusCode, ex.toResponse())
         }
     }
 
-    // Setup routing
+    // Setup REST routing
     routing {
 
-        // Print REST requests
+        // Print REST requests into a log
         trace {
             application.log.debug(it.buildText())
             application.log.debug(it.call.request.headers.toMap().toString())

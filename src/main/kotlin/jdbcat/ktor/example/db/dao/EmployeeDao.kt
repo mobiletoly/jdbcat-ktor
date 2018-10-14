@@ -20,7 +20,6 @@ import javax.sql.DataSource
  * val addedEmployee = dataSource.tx { connection ->
  *     employeeDao.add(employee = employeeToAdd)
  * }
- * println(employeeDao)
  *
  * -- Do not put your business logic here, DAO should stay as light as possible.
  * -- For anything more complicated (or when logic requires few tables to interact) - use "service" layer.
@@ -46,7 +45,7 @@ class EmployeeDao(private val dataSource: DataSource) {
             connection = connection,
             returningColumnsOnUpdate = listOf(Employees.id)
         ) {
-            employee copyFieldsTo it
+            employee.copyFieldsTo(it)
         }
         logger.debug { "add(): $stmt" }
         stmt.executeUpdate()
@@ -59,7 +58,7 @@ class EmployeeDao(private val dataSource: DataSource) {
             connection,
             returningColumnsOnUpdate = listOf(Employees.dateCreated)
         ) {
-            employee copyFieldsTo it
+            employee.copyFieldsTo(it)
         }
         logger.debug { "update(): $stmt" }
         stmt.executeUpdate()
