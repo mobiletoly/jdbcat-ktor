@@ -68,9 +68,10 @@ private suspend fun createInitialDepartments(dataSource: DataSource) = dataSourc
         Department(code = "AMS", name = "Amsterdam's Office", countryCode = "NLD", city = "Amsterdam",
             comments = "Just for fun :)", dateCreated = Date(Date().time - 33333333333L))
     )
+    val insertDepartmentStmt = insertDepartmentTemplate.prepareStatement(connection)
     // TODO Add batch functionality
     for (department in departments) {
-        val stmt = insertDepartmentTemplate.prepareStatement(connection) {
+        insertDepartmentStmt.setColumns {
             it[Departments.code] = department.code
             it[Departments.name] = department.name
             it[Departments.countryCode] = department.countryCode
@@ -78,13 +79,15 @@ private suspend fun createInitialDepartments(dataSource: DataSource) = dataSourc
             it[Departments.comments] = department.comments
             it[Departments.dateCreated] = department.dateCreated!!
         }
-        logger.debug { "[Add Department] SQL: $stmt" }
-        stmt.executeUpdate()
+        logger.debug { "[Add Department] SQL: $insertDepartmentStmt" }
+        insertDepartmentStmt.executeUpdate()
     }
 }
 
 // Copy some dummy data into Employees table
 private suspend fun createInitialEmployees(dataSource: DataSource) = dataSource.txRequired { connection ->
+    logger.info { "Create dummy Employee records" }
+
     val insertEmployeeTemplate = sqlTemplate(Employees) {
         "INSERT INTO $tableName (${(columns - id).sqlNames}) VALUES (${(columns - id).sqlValues})"
     }
@@ -100,9 +103,10 @@ private suspend fun createInitialEmployees(dataSource: DataSource) = dataSource.
         Employee(firstName = "Lenny", lastName = "Matthews", age = 50, departmentCode = "AMS",
             comments = "DJ", dateCreated = Date(Date().time - 25555555555L))
     )
+    val insertEmployeeStmt = insertEmployeeTemplate.prepareStatement(connection)
     // TODO Add batch functionality
     for (employee in employees) {
-        val stmt = insertEmployeeTemplate.prepareStatement(connection) {
+        val stmt = insertEmployeeStmt.setColumns {
             it[Employees.firstName] = employee.firstName
             it[Employees.lastName] = employee.lastName
             it[Employees.age] = employee.age

@@ -48,12 +48,13 @@ class DepartmentDao(private val dataSource: DataSource) {
     // if Department with this [Department.code] already exists - it will be updated
     // if it does not exist yet - it will be created.
     suspend fun insertOrUpdate(department: Department) = dataSource.txRequired { connection ->
-        val stmt = upsertDepartmentSqlTemplate.prepareStatement(
-            connection = connection,
-            returningColumnsOnUpdate = listOf(Departments.dateCreated)
-        ) {
-            department.copyValuesTo(it)
-        }
+        val stmt = upsertDepartmentSqlTemplate
+            .prepareStatement(
+                connection = connection,
+                returningColumnsOnUpdate = listOf(Departments.dateCreated))
+            .setColumns {
+                department.copyValuesTo(it)
+            }
         logger.debug { "insertOrUpdate(): $stmt" }
         stmt.executeUpdate()
         val dateCreated = stmt.generatedKeys.singleRow { it[Departments.dateCreated] }
@@ -61,9 +62,11 @@ class DepartmentDao(private val dataSource: DataSource) {
     }
 
     suspend fun queryByCode(code: String) = dataSource.txRequired { connection ->
-        val stmt = selectByCodeSqlTemplate.prepareStatement(connection) {
-            it[Departments.code] = code
-        }
+        val stmt = selectByCodeSqlTemplate
+            .prepareStatement(connection)
+            .setColumns {
+                it[Departments.code] = code
+            }
         logger.debug { "getByCode(): $stmt" }
         stmt.executeQuery()
             .singleRowOrNull { Department.extractFrom(it) }

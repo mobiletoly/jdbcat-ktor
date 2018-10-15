@@ -9,6 +9,7 @@ repositories {
     jcenter()
     maven { url "https://dl.bintray.com/kotlin/ktor" }
     maven { url 'https://jitpack.io' }
+    maven { url "https://dl.bintray.com/spekframework/spek-dev" }
 }
 
 group 'jdbcat.examples'
@@ -46,7 +47,14 @@ dependencies {
     implementation "org.postgresql:postgresql:$postgres_driver_version"
 
     testCompile "org.testcontainers:postgresql:$testcontainers_version"
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    testImplementation ('org.spekframework.spek2:spek-dsl-jvm:2.0.0-rc.1')  {
+        exclude group: 'org.jetbrains.kotlin'
+    }
+    testRuntimeOnly ('org.spekframework.spek2:spek-runner-junit5:2.0.0-rc.1') {
+        exclude group: 'org.junit.platform'
+        exclude group: 'org.jetbrains.kotlin'
+    }
 
     ktlint "com.github.shyiko:ktlint:0.29.0"
 }
@@ -60,7 +68,7 @@ shadowJar {
 
 // --- ktlint configuration --
 task ktlint(type: JavaExec, group: "verification") {
-    description = "Check Kotlin code style."
+    description = "Check Kotlin code style"
     classpath = configurations.ktlint
     main = "com.github.shyiko.ktlint.Main"
     args = ["src/**/*.kt"]
@@ -75,3 +83,9 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
     args = ["-F", "src/**/*.kt"]
 }
 check.dependsOn ktlint
+
+test {
+    useJUnitPlatform {
+        includeEngines 'spek2'
+    }
+}

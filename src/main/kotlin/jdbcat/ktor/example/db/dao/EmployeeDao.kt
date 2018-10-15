@@ -41,12 +41,13 @@ class EmployeeDao(private val dataSource: DataSource) {
     }
 
     suspend fun add(employee: Employee) = dataSource.txRequired { connection ->
-        val stmt = insertNewEmployeeSqlTemplate.prepareStatement(
-            connection = connection,
-            returningColumnsOnUpdate = listOf(Employees.id)
-        ) {
-            employee.copyFieldsTo(it)
-        }
+        val stmt = insertNewEmployeeSqlTemplate
+            .prepareStatement(
+                connection = connection,
+                returningColumnsOnUpdate = listOf(Employees.id))
+            .setColumns {
+                employee.copyFieldsTo(it)
+            }
         logger.debug { "add(): $stmt" }
         stmt.executeUpdate()
         val employeeId = stmt.generatedKeys.singleRow { it[Employees.id] }
@@ -54,12 +55,13 @@ class EmployeeDao(private val dataSource: DataSource) {
     }
 
     suspend fun update(employee: Employee) = dataSource.txRequired { connection ->
-        val stmt = updateEmployeeSqlTemplate.prepareStatement(
-            connection,
-            returningColumnsOnUpdate = listOf(Employees.dateCreated)
-        ) {
-            employee.copyFieldsTo(it)
-        }
+        val stmt = updateEmployeeSqlTemplate
+            .prepareStatement(
+                connection = connection,
+                returningColumnsOnUpdate = listOf(Employees.dateCreated))
+            .setColumns {
+                employee.copyFieldsTo(it)
+            }
         logger.debug { "update(): $stmt" }
         stmt.executeUpdate()
         val dateCreated = stmt.generatedKeys.singleRow { it[Employees.dateCreated] }
@@ -67,9 +69,11 @@ class EmployeeDao(private val dataSource: DataSource) {
     }
 
     suspend fun queryById(id: Int) = dataSource.txRequired { connection ->
-        val stmt = selectByIdSqlTemplate.prepareStatement(connection) {
-            it[Employees.id] = id
-        }
+        val stmt = selectByIdSqlTemplate
+            .prepareStatement(connection)
+            .setColumns {
+                it[Employees.id] = id
+            }
         logger.debug { "queryById(): $stmt" }
         stmt.executeQuery().singleRow { Employee.extractFrom(it) }
     }

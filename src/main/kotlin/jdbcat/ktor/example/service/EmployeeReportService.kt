@@ -22,12 +22,14 @@ class EmployeeReportService(private val dataSource: DataSource) {
         lowerAge: Int,
         upperAge: Int
     ) = dataSource.tx { connection ->
-        val stmt = selectSortedWithinAgeRange.prepareStatement(connection) {
-            it[Departments.countryCode] = countryCode
-            it[Employees.age, "lowerAge"] = lowerAge
-            it[Employees.age, "upperAge"] = upperAge
-        }
-        logger.debug { "queryAllWithinAgeRangeGroupedByDepartment(): $stmt" }
+        val stmt = selectSortedWithinAgeRange
+            .prepareStatement(connection)
+            .setColumns {
+                it[Departments.countryCode] = countryCode
+                it[Employees.age, "lowerAge"] = lowerAge
+                it[Employees.age, "upperAge"] = upperAge
+            }
+        logger.debug { "allEmployeesWithinAgeRangeGroupedByDepartment(): $stmt" }
         stmt.executeQuery()
             .asSequence()
             .map {
