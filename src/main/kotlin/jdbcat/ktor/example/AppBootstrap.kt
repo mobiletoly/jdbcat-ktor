@@ -1,120 +1,140 @@
 package jdbcat.ktor.example
 
+import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.Application
-import jdbcat.core.sqlNames
-import jdbcat.core.sqlTemplate
-import jdbcat.core.sqlValues
+import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.application.log
+import io.ktor.features.CORS
+import io.ktor.features.CallId
+import io.ktor.features.CallLogging
+import io.ktor.features.ContentNegotiation
+import io.ktor.features.DefaultHeaders
+import io.ktor.features.StatusPages
+import io.ktor.features.callIdMdc
+import io.ktor.http.HttpMethod
+import io.ktor.jackson.jackson
+import io.ktor.response.respond
+import io.ktor.routing.route
+import io.ktor.routing.routing
+import io.ktor.util.toMap
 import jdbcat.core.tx
-import jdbcat.core.txRequired
 import jdbcat.ktor.example.db.dao.DepartmentDao
 import jdbcat.ktor.example.db.dao.EmployeeDao
-import jdbcat.ktor.example.db.model.Department
-import jdbcat.ktor.example.db.model.Departments
-import jdbcat.ktor.example.db.model.Employee
-import jdbcat.ktor.example.db.model.Employees
+import jdbcat.ktor.example.route.healthCheckRoute
+import jdbcat.ktor.example.route.v1.adminRoute
+import jdbcat.ktor.example.route.v1.departmentRoute
+import jdbcat.ktor.example.route.v1.employeeRoute
+import jdbcat.ktor.example.route.v1.reportRoute
 import kotlinx.coroutines.experimental.runBlocking
 import mu.KotlinLogging
 import org.koin.ktor.ext.inject
-import org.koin.ktor.ext.installKoin
-import org.koin.log.Logger.SLF4JLogger
-import java.util.Date
+import java.util.UUID
 import javax.sql.DataSource
 
 private val logger = KotlinLogging.logger { }
 
-// Perform application-wide bootstrap
+// Perform application bootstrap
 fun Application.bootstrap() {
-
-    // Add Koin DI support for Ktor
-    installKoin(
-        listOf(appModule),
-        logger = SLF4JLogger())
 
     // Create database tables (if needed)
     bootstrapDatabase()
+    // Bootstrap REST
+    bootstrapRest()
 }
 
 // Create tables and initialize data if necessary
-fun Application.bootstrapDatabase() = runBlocking {
+private fun Application.bootstrapDatabase() = runBlocking {
     val dataSource by inject<DataSource>()
     val departmentDao by inject<DepartmentDao>()
     val employeeDao by inject<EmployeeDao>()
 
     dataSource.tx {
-        // TODO Comment out this block if you don't want for tables to be recreated and reinitialized every time
-        employeeDao.dropTableIfExists()
-        departmentDao.dropTableIfExists()
+        // Uncomment this lines if you want to delete tables first (e.g. if you have changed table layouts)
+        // employeeDao.dropTableIfExists()
+        // departmentDao.dropTableIfExists()
         departmentDao.createTableIfNotExists()
         employeeDao.createTableIfNotExists()
-        createInitialDepartments(dataSource = dataSource)
-        createInitialEmployees(dataSource = dataSource)
     }
 }
 
-// Copy some dummy data into Departments table
-private suspend fun createInitialDepartments(dataSource: DataSource) = dataSource.txRequired { connection ->
-    logger.info { "Create dummy Department records" }
+private fun Application.bootstrapRest() {
 
-    val insertDepartmentTemplate = sqlTemplate(Departments) {
-        "INSERT INTO $tableName (${columns.sqlNames}) VALUES (${columns.sqlValues})"
+    // Produce default headers
+    install(DefaultHeaders)
+
+    // ktor 0.9.5 added MDC support for coroutines and this allows us to print call request id for the entire
+    // execution context. This is great, because we can return that call request id back to a client
+    // in a header and in case of error, user can provide us with a call request id (let's say we might
+    // print it on a screen or in JavaScript console) and we could track the entire execution path even
+    // in a very busy logs (e.g. on file system or in Splunk).
+    // In order to print call request id we use %X{mdc-callid} specifier in resources/logback.xml
+    install(CallLogging) {
+        callIdMdc("mdc-callid")
     }
-    val departments = listOf(
-        Department(code = "SEA", name = "Seattle's Office", countryCode = "USA", city = "Seattle",
-            comments = "Headquarter and R&D", dateCreated = Date(Date().time - 99999999999L)),
-        Department(code = "CHI", name = "Chicago's Office", countryCode = "USA", city = "Chicago",
-            comments = "Financial department", dateCreated = Date(Date().time - 77777777777L)),
-        Department(code = "BER", name = "Berlin's Office", countryCode = "DEU", city = "Berlin",
-            comments = "R&D", dateCreated = Date(Date().time - 55555555555L)),
-        Department(code = "AMS", name = "Amsterdam's Office", countryCode = "NLD", city = "Amsterdam",
-            comments = "Just for fun :)", dateCreated = Date(Date().time - 33333333333L))
-    )
-    val insertDepartmentStmt = insertDepartmentTemplate.prepareStatement(connection)
-    // TODO Add batch functionality
-    for (department in departments) {
-        insertDepartmentStmt.setColumns {
-            it[Departments.code] = department.code
-            it[Departments.name] = department.name
-            it[Departments.countryCode] = department.countryCode
-            it[Departments.city] = department.city
-            it[Departments.comments] = department.comments
-            it[Departments.dateCreated] = department.dateCreated!!
+    install(CallId) {
+        // Unique id will be generated in form of "callid-UUID" for a CallLogging feature described above
+        generate {
+            "callid-${UUID.randomUUID()}"
         }
-        logger.debug { "[Add Department] SQL: $insertDepartmentStmt" }
-        insertDepartmentStmt.executeUpdate()
     }
-}
 
-// Copy some dummy data into Employees table
-private suspend fun createInitialEmployees(dataSource: DataSource) = dataSource.txRequired { connection ->
-    logger.info { "Create dummy Employee records" }
-
-    val insertEmployeeTemplate = sqlTemplate(Employees) {
-        "INSERT INTO $tableName (${(columns - id).sqlNames}) VALUES (${(columns - id).sqlValues})"
+    // Some frameworks such as Angular require additional CORS configuration
+    install(CORS) {
+        method(HttpMethod.Options)
+        method(HttpMethod.Put)
+        method(HttpMethod.Delete)
+        header("*")
+        allowCredentials = true
+        allowSameOrigin = true
+        anyHost()
     }
-    val employees = listOf(
-        Employee(firstName = "Toly", lastName = "Pochkin", age = 40, departmentCode = "SEA",
-            comments = "CEO", dateCreated = Date(Date().time - 89999999999L)),
-        Employee(firstName = "Jemmy", lastName = "Hyland", age = 27, departmentCode = "SEA",
-            comments = "CPO", dateCreated = Date(Date().time - 79999999999L)),
-        Employee(firstName = "Doreen", lastName = "Fosse", age = 35, departmentCode = "CHI",
-            comments = "CFO", dateCreated = Date(Date().time - 69999999999L)),
-        Employee(firstName = "Brandy", lastName = "Ashworth", age = 39, departmentCode = "BER",
-            comments = "Lead engineer", dateCreated = Date(Date().time - 45555555555L)),
-        Employee(firstName = "Lenny", lastName = "Matthews", age = 50, departmentCode = "AMS",
-            comments = "DJ", dateCreated = Date(Date().time - 25555555555L))
-    )
-    val insertEmployeeStmt = insertEmployeeTemplate.prepareStatement(connection)
-    // TODO Add batch functionality
-    for (employee in employees) {
-        val stmt = insertEmployeeStmt.setColumns {
-            it[Employees.firstName] = employee.firstName
-            it[Employees.lastName] = employee.lastName
-            it[Employees.age] = employee.age
-            it[Employees.departmentCode] = employee.departmentCode
-            it[Employees.comments] = employee.comments
-            it[Employees.dateCreated] = employee.dateCreated!!
+
+    // Content conversions - here we setup serialization and deserialization of JSON objects
+    install(ContentNegotiation) {
+        // We use Jackson for JSON: https://github.com/FasterXML/jackson
+        jackson {
+            // Use ISO-8601 date/time format
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            // Pretty print of JSON output
+            enable(SerializationFeature.INDENT_OUTPUT)
         }
-        logger.debug { "[Add Employee] SQL: $stmt" }
-        stmt.executeUpdate()
+    }
+
+    // Return proper HTTP error: https://ktor.io/features/status-pages.html
+    install(StatusPages) {
+        // setup exception handlers
+        // We have introduced application-specific exception - AppGenericException allowing us
+        // to specify HTTP status code to be returned to HTTP REST client.
+        exception<AppGenericException> { ex ->
+            logger.error(ex) { "Application exception to be returned to a caller" }
+            call.respond(ex.httpStatusCode, ex.toResponse())
+        }
+    }
+
+    // Setup REST routing
+    routing {
+
+        // Print REST requests into a log
+        trace {
+            application.log.debug(it.buildText())
+            application.log.debug(it.call.request.headers.toMap().toString())
+        }
+
+        // /bootstrap
+        route("/") {
+            // /healthcheck
+            healthCheckRoute()
+            adminRoute()
+        }
+
+        route("/$serviceApiVersionV1") {
+            // /api/v1/departments
+            departmentRoute()
+            // /api/v1/employees
+            employeeRoute()
+            // /api/v1/reports
+            reportRoute()
+        }
     }
 }

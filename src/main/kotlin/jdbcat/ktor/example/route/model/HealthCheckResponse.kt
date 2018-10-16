@@ -1,4 +1,4 @@
-package jdbcat.ktor.example.route.v1.model
+package jdbcat.ktor.example.route.model
 
 import java.util.Date
 

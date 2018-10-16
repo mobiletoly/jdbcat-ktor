@@ -13,7 +13,9 @@ import javax.sql.DataSource
  */
 val appModule = module(createOnStart = true) {
 
-    single { AppGlobals() }
+    single {
+        AppGlobals(config = getProperty("mainConfig"))
+    }
 
     // Data source. We use 1 data source per 1 database. One data source may supply multiple connections.
     single {
