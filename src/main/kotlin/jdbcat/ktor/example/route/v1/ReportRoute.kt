@@ -5,6 +5,7 @@ import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import io.ktor.routing.route
+import jdbcat.ktor.example.MissingArgumentException
 import jdbcat.ktor.example.route.v1.model.DepartmentResponse
 import jdbcat.ktor.example.route.v1.model.EmployeeResponse
 import jdbcat.ktor.example.service.EmployeeReportService
@@ -18,9 +19,9 @@ fun Route.reportRoute() {
 
         // Get all employees grouped by departments
         get("/departments/employees") { _ ->
-            val countryCode = call.parameters["country-code"]!!
-            val lowerAge = call.parameters["lower-age"]!!.toInt()
-            val upperAge = call.parameters["upper-age"]!!.toInt()
+            val countryCode = call.parameters["country-code"] ?: throw MissingArgumentException("country-code")
+            val lowerAge = call.parameters["lower-age"]?.toInt() ?: throw MissingArgumentException("lower-age")
+            val upperAge = call.parameters["upper-age"]?.toInt() ?: throw MissingArgumentException("upper-age")
             val departmentsToEmployees = employeeReportService
                 .allEmployeesWithinAgeRangeGroupedByDepartment(
                     countryCode = countryCode,

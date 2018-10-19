@@ -1,5 +1,6 @@
 package jdbcat.ktor.example.db.dao
 
+import jdbcat.core.EphemeralTable
 import jdbcat.core.asSequence
 import jdbcat.core.singleRow
 import jdbcat.core.singleRowOrNull
@@ -8,7 +9,7 @@ import jdbcat.core.sqlNames
 import jdbcat.core.sqlTemplate
 import jdbcat.core.sqlValues
 import jdbcat.core.txRequired
-import jdbcat.dialects.pgAssignNamesToExcludedNames
+import jdbcat.dialects.pg.pgAssignNamesToExcludedNames
 import jdbcat.ktor.example.EntityNotFoundException
 import jdbcat.ktor.example.db.model.Department
 import jdbcat.ktor.example.db.model.Departments
@@ -81,6 +82,27 @@ class DepartmentDao(private val dataSource: DataSource) {
         }
     }
 
+    suspend fun countAll() = dataSource.txRequired { connection ->
+        val stmt = countAll.prepareStatement(connection)
+        logger.debug { "countAll(): $stmt" }
+        stmt.executeQuery().singleRow { it[CounterResult.counter] }
+    }
+
+    /**
+     * Delete department by code.
+     */
+    suspend fun deleteByCode(code: String) = dataSource.txRequired { connection ->
+        val stmt = deleteByCode
+            .prepareStatement(connection)
+            .setColumns {
+                it[Departments.code] = code
+            }
+        logger.debug { "deleteByCode(): $stmt" }
+        if (stmt.executeUpdate() == 0) {
+            throw EntityNotFoundException("Department code=$code does not exist")
+        }
+    }
+
     // SQL templates. For performance reasons it is always better to create constants with SQL templates
     // instead of doing it directly in DAO functions.
     companion object {
@@ -119,6 +141,18 @@ class DepartmentDao(private val dataSource: DataSource) {
 
         private val selectAllOrderedByCodeSqlTemplate = sqlTemplate(Departments) {
             "SELECT * FROM $tableName ORDER BY $code"
+        }
+
+        private val deleteByCode = sqlTemplate(Departments) {
+            "DELETE FROM $tableName WHERE $code = ${code.v}"
+        }
+
+        private val countAll = sqlTemplate(CounterResult, Departments) { cr, e ->
+            "SELECT COUNT(*) AS ${cr.counter} FROM ${e.tableName}"
+        }
+
+        object CounterResult : EphemeralTable() {
+            val counter = integer("counter").nonnull()
         }
     }
 }

@@ -19,7 +19,7 @@ fun Route.employeeRoute() {
     val dataSource by inject<DataSource>()
     val employeeDao by inject<EmployeeDao>()
 
-    route ("/employees") {
+    route("/employees") {
 
         // Get all employees
         get("/") {

@@ -1,6 +1,8 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.1'
     id 'java'
+    id 'application'
+    id 'jacoco'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
     id 'org.jetbrains.kotlin.jvm' version '1.2.71'
 }
 
@@ -14,6 +16,10 @@ repositories {
 
 group 'jdbcat.examples'
 version '1.0-SNAPSHOT'
+
+// Application entry point. This will run ktor and ktor will run our application
+// based on /resources/application.conf settings
+mainClassName = "io.ktor.server.netty.DevelopmentEngine"
 
 configurations {
     ktlint
@@ -59,6 +65,7 @@ dependencies {
         exclude group: 'org.junit.platform'
         exclude group: 'org.jetbrains.kotlin'
     }
+    
     ktlint "com.github.shyiko:ktlint:0.29.0"
 }
 
@@ -91,4 +98,16 @@ test {
     useJUnitPlatform {
         includeEngines 'spek2'
     }
+    dependsOn 'cleanTest'
+    // Show test results.
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
+
+jacoco {
+    toolVersion = "0.8.2"
+    reportsDir = file("$buildDir/jacoco") // Jacoco's output root.
+}
+
+test.finalizedBy(jacocoTestReport)

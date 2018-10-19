@@ -37,10 +37,14 @@ private val logger = KotlinLogging.logger { }
 // Perform application bootstrap
 fun Application.bootstrap() {
 
+    val appSettings by inject<AppSettings>()
+
     // Create database tables (if needed)
     bootstrapDatabase()
     // Bootstrap REST
     bootstrapRest()
+
+    logger.info("Some other property value: ${appSettings.someOtherProperty}")
 }
 
 // Create tables and initialize data if necessary

@@ -7,6 +7,7 @@ import io.ktor.request.receive
 import io.ktor.response.header
 import io.ktor.response.respond
 import io.ktor.routing.Route
+import io.ktor.routing.delete
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.put
@@ -31,7 +32,7 @@ fun Route.departmentRoute() {
     val departmentDao by inject<DepartmentDao>()
     val employeeDao by inject<EmployeeDao>()
 
-    route ("/departments") {
+    route("/departments") {
 
         // Get all departments
         get("/") { _ ->
@@ -68,6 +69,14 @@ fun Route.departmentRoute() {
                     .let { DepartmentResponse.fromEntity(it) }
                 call.respond(departmentResponse)
             }
+        }
+
+        delete("/{code}") {
+            val code = call.parameters["code"]!!
+            dataSource.tx {
+                departmentDao.deleteByCode(code = code)
+            }
+            call.respond(HttpStatusCode.NoContent)
         }
 
         // Add new employee to an existing department

@@ -19,3 +19,8 @@ class EntityNotFoundException(errorMessage: String) : AppGenericException(
     httpStatusCode = HttpStatusCode.NotFound,
     errorMessage = errorMessage
 )
+
+class MissingArgumentException(argName: String) : AppGenericException(
+    httpStatusCode = HttpStatusCode.BadRequest,
+    errorMessage = "Missing argument '$argName'"
+)

@@ -19,8 +19,7 @@ private val logger = KotlinLogging.logger { }
 fun Application.main() {
 
     val mainConfig = ConfigFactory.load("main.conf")
-
-    // Add Koin DI support for Ktor
+    // Add Koin DI support to Ktor
     installKoin(
         listOf(appModule),
         extraProperties = mapOf("mainConfig" to mainConfig),

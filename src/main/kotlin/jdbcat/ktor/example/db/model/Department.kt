@@ -3,7 +3,7 @@ package jdbcat.ktor.example.db.model
 import jdbcat.core.ColumnValueBuilder
 import jdbcat.core.ColumnValueExtractor
 import jdbcat.core.Table
-import jdbcat.dialects.pgText
+import jdbcat.dialects.pg.pgText
 import jdbcat.ext.javaDate
 import java.util.Date
 

@@ -1,16 +1,22 @@
 package jdbcat.ktor.example.db.dao
 
+import jdbcat.core.EphemeralTable
 import jdbcat.core.asSequence
-import jdbcat.core.sqlTemplate
-import jdbcat.ktor.example.db.model.Employee
-import jdbcat.ktor.example.db.model.Employees
 import jdbcat.core.singleRow
+import jdbcat.core.singleRowOrNull
 import jdbcat.core.sqlAssignNamesToValues
 import jdbcat.core.sqlDefinitions
 import jdbcat.core.sqlNames
+import jdbcat.core.sqlTemplate
 import jdbcat.core.sqlValues
 import jdbcat.core.txRequired
+import jdbcat.dialects.pg.PSQLState
+import jdbcat.dialects.pg.hasState
+import jdbcat.ktor.example.EntityNotFoundException
+import jdbcat.ktor.example.db.model.Employee
+import jdbcat.ktor.example.db.model.Employees
 import mu.KotlinLogging
+import java.sql.SQLException
 import javax.sql.DataSource
 
 /**
@@ -49,8 +55,17 @@ class EmployeeDao(private val dataSource: DataSource) {
                 employee.copyFieldsTo(it)
             }
         logger.debug { "add(): $stmt" }
-        stmt.executeUpdate()
-        val employeeId = stmt.generatedKeys.singleRow { it[Employees.id] }
+        try {
+            stmt.executeUpdate()
+        } catch (ex: SQLException) {
+            if (ex.hasState(PSQLState.FOREIGN_KEY_VIOLATION)) {
+                // PostgreSQL specific state that most likely came from attempt to update Employees entity
+                // with"departmentCode" pointing to non-existing column in Departments
+                throw EntityNotFoundException("Department with code=${Employees.departmentCode} does not exist")
+            }
+            throw ex
+        }
+        val employeeId: Int = stmt.generatedKeys.singleRow { it[Employees.id] }
         employee.copy(id = employeeId)
     }
 
@@ -63,7 +78,10 @@ class EmployeeDao(private val dataSource: DataSource) {
                 employee.copyFieldsTo(it)
             }
         logger.debug { "update(): $stmt" }
-        stmt.executeUpdate()
+        if (stmt.executeUpdate() == 0) {
+            throw EntityNotFoundException(errorMessage = "Entity Employee id=${employee.id} " +
+                "was not found and cannot be updated")
+        }
         val dateCreated = stmt.generatedKeys.singleRow { it[Employees.dateCreated] }
         employee.copy(dateCreated = dateCreated)
     }
@@ -75,7 +93,8 @@ class EmployeeDao(private val dataSource: DataSource) {
                 it[Employees.id] = id
             }
         logger.debug { "queryById(): $stmt" }
-        stmt.executeQuery().singleRow { Employee.extractFrom(it) }
+        val rs = stmt.executeQuery()
+        rs.singleRowOrNull { Employee.extractFrom(it) } ?: throw EntityNotFoundException("Entity Employee cannot be found by id=$id")
     }
 
     suspend fun queryAll() = dataSource.txRequired { connection ->
@@ -84,6 +103,12 @@ class EmployeeDao(private val dataSource: DataSource) {
         stmt.executeQuery().asSequence().map {
             Employee.extractFrom(it)
         }
+    }
+
+    suspend fun countAll() = dataSource.txRequired { connection ->
+        val stmt = countAll.prepareStatement(connection)
+        logger.debug { "countAll(): $stmt" }
+        stmt.executeQuery().singleRow { it[CounterResult.counter] }
     }
 
     // SQL templates. For performance reasons it is always better to create constants with SQL templates
@@ -123,6 +148,14 @@ class EmployeeDao(private val dataSource: DataSource) {
 
         private val selectAll = sqlTemplate(Employees) {
             "SELECT * FROM $tableName ORDER BY $dateCreated"
+        }
+
+        private val countAll = sqlTemplate(CounterResult, Employees) { cr, e ->
+            "SELECT COUNT(*) AS ${cr.counter} FROM ${e.tableName}"
+        }
+
+        object CounterResult : EphemeralTable() {
+            val counter = integer("counter").nonnull()
         }
     }
 }

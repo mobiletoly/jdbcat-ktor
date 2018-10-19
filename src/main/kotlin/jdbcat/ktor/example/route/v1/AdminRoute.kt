@@ -30,7 +30,7 @@ fun Route.adminRoute() {
     val departmentDao by inject<DepartmentDao>()
     val employeeDao by inject<EmployeeDao>()
 
-    route ("/admin") {
+    route("/admin") {
 
         // Perform database bootstrap - copy dummy data into tables
         post("/bootstrap") {

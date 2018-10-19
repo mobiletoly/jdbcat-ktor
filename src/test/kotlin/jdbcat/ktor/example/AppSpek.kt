@@ -2,6 +2,7 @@ package jdbcat.ktor.example
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.typesafe.config.ConfigFactory
+import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.withTestApplication
@@ -20,7 +21,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 /**
- * Derive your objects for this class if you want to initialize TestContainers database
+ * Derive your objects from this class if you want to initialize TestContainers database
  * and test REST interfaces.
  */
 abstract class AppSpek(val appRoot: Root.() -> Unit) : Spek({
@@ -41,6 +42,7 @@ abstract class AppSpek(val appRoot: Root.() -> Unit) : Spek({
                 departmentDao.dropTableIfExists()
             }
         }
+        (dataSource as HikariDataSource).close()
     }
 
     appRoot()
@@ -60,17 +62,18 @@ abstract class AppSpek(val appRoot: Root.() -> Unit) : Spek({
 
         private fun initApp(application: Application) {
             val mainConfigProperties = Properties().apply {
-                put("hikari-jdbcat.ktor.example.main-db.dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource")
-                put("hikari-jdbcat.ktor.example.main-db.dataSource.url", postgresContainer.jdbcUrl)
-                put("hikari-jdbcat.ktor.example.main-db.dataSource.user", postgresContainer.username)
-                put("hikari-jdbcat.ktor.example.main-db.dataSource.password", postgresContainer.password)
-                put("hikari-jdbcat.ktor.example.main-db.autoCommit", false)
+                put("jdbcat-ktor.main-db.hikari.dataSourceClassName", "org.postgresql.ds.PGSimpleDataSource")
+                put("jdbcat-ktor.main-db.hikari.dataSource.url", postgresContainer.jdbcUrl)
+                put("jdbcat-ktor.main-db.hikari.dataSource.user", postgresContainer.username)
+                put("jdbcat-ktor.main-db.hikari.dataSource.password", postgresContainer.password)
+                put("jdbcat-ktor.main-db.hikari.autoCommit", false)
+                put("some-other-config.some-other-property", "some other test value")
             }
-            val mainConfig = ConfigFactory.parseProperties(mainConfigProperties)
+            val config = ConfigFactory.parseProperties(mainConfigProperties)
 
             application.installKoin(
                 listOf(appModule),
-                extraProperties = mapOf("mainConfig" to mainConfig),
+                extraProperties = mapOf("mainConfig" to config),
                 logger = SLF4JLogger()
             )
             application.bootstrap()
