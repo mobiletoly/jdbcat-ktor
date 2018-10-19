@@ -5,6 +5,7 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.application.log
+import io.ktor.features.AutoHeadResponse
 import io.ktor.features.CORS
 import io.ktor.features.CallId
 import io.ktor.features.CallLogging
@@ -13,6 +14,8 @@ import io.ktor.features.DefaultHeaders
 import io.ktor.features.StatusPages
 import io.ktor.features.callIdMdc
 import io.ktor.http.HttpMethod
+import io.ktor.http.content.resources
+import io.ktor.http.content.static
 import io.ktor.jackson.jackson
 import io.ktor.response.respond
 import io.ktor.routing.route
@@ -64,8 +67,8 @@ private fun Application.bootstrapDatabase() = runBlocking {
 
 private fun Application.bootstrapRest() {
 
-    // Produce default headers
     install(DefaultHeaders)
+    install(AutoHeadResponse)
 
     // ktor 0.9.5 added MDC support for coroutines and this allows us to print call request id for the entire
     // execution context. This is great, because we can return that call request id back to a client
@@ -123,6 +126,10 @@ private fun Application.bootstrapRest() {
         trace {
             application.log.debug(it.buildText())
             application.log.debug(it.call.request.headers.toMap().toString())
+        }
+
+        static("static") {
+            resources("static")
         }
 
         // /bootstrap
