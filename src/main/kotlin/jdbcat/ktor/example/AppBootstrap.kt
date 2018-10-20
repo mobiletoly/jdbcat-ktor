@@ -24,7 +24,7 @@ import io.ktor.util.toMap
 import jdbcat.core.tx
 import jdbcat.ktor.example.db.dao.DepartmentDao
 import jdbcat.ktor.example.db.dao.EmployeeDao
-import jdbcat.ktor.example.route.healthCheckRoute
+import jdbcat.ktor.example.route.v1.healthCheckRoute
 import jdbcat.ktor.example.route.v1.adminRoute
 import jdbcat.ktor.example.route.v1.departmentRoute
 import jdbcat.ktor.example.route.v1.employeeRoute
@@ -128,23 +128,21 @@ private fun Application.bootstrapRest() {
             application.log.debug(it.call.request.headers.toMap().toString())
         }
 
-        static("static") {
-            resources("static")
-        }
-
-        // /bootstrap
-        route("/") {
-            // /healthcheck
-            healthCheckRoute()
-            adminRoute()
+        static("frontend") {
+            resources("frontend")
         }
 
         route("/$serviceApiVersionV1") {
-            // /api/v1/departments
+            // api/v1/healthcheck
+            healthCheckRoute()
+            // api/v1/admin
+            adminRoute()
+
+            // api/v1/departments
             departmentRoute()
-            // /api/v1/employees
+            // api/v1/employees
             employeeRoute()
-            // /api/v1/reports
+            // api/v1/reports
             reportRoute()
         }
     }

@@ -28,6 +28,9 @@ and some other misc stuff:
 - **ktlint** for Kotlin checkstyle
 - **jacoco** for code coverage metrics
 
+and for frontend (optional, if you need frontend to be deployed with your service)
+- **React JS** + **Typescript**
+
 # Setup
 
 ## Prerequisites
@@ -86,6 +89,15 @@ imported jdbcat-ktor as Gradle project with your own IntelliJ project - then you
 | Program arguments       | -config=src/main/resources/application.conf |
 | Use classpath or module | jdbcat-ktor_main                            |
 
+You can enable auto-reload mode, we have a separate config for it (obviously don't use it in production). Change
+"Program arguments" to "-config=src/main/resources/application-dev.conf"
+Then you can run
+```bash
+$ ./gradlew -t -x test -x shadowJar -x shadowDistZip -x distZip -x distTar -x ktlintTestCheck -x ktlintMainCheck -x junitPlatformTest build
+```
+to enable continuous compilation (so every time you press Save in editor - code will be recompiled and redeployed
+with need to manually restart a server). Read more about this functionality here https://ktor.io/servers/autoreload.htm
+
 #### Run tests
 
 ```bash
@@ -102,3 +114,21 @@ to install "Spek Framework" plugin and after that go to **Edit Configuration**, 
 and select **Spek 2 - JVM**. You can leave all fields empty but select `jdbcat-ktor_test` in
 "Use classpath or module" field. After that you can run it (if you need a code coverage make sure to perform
 **Run / Run 'Spek tests' with Coverage**).
+
+## Frontend
+
+Go to ./frontend directory and run
+
+```bash
+$ npm install
+```
+to perform initial installation
+
+When you want to initiate continuous compilation - you can run 
+```bash
+$ npx webpack --watch
+```
+it will ensure that all your changes to frontend source code in ./frontend/src directory will be automatically
+compiled and copied to Kotlin's `./src/main/resources/frontend` directory where it will be accessible by ktor.
+You still have to invoke "Build / Build Project" in IntelliJ in order for auto-compiled files to end-up in JAR file,
+usually no server restart is required, Hot Reload should take care of that.

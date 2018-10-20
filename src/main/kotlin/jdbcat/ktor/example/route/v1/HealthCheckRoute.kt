@@ -1,11 +1,11 @@
-package jdbcat.ktor.example.route
+package jdbcat.ktor.example.route.v1
 
 import io.ktor.application.call
 import io.ktor.response.respond
 import io.ktor.routing.Route
 import io.ktor.routing.get
 import io.ktor.routing.route
-import jdbcat.ktor.example.route.model.HealthCheckResponse
+import jdbcat.ktor.example.route.v1.model.HealthCheckResponse
 
 fun Route.healthCheckRoute() {
 

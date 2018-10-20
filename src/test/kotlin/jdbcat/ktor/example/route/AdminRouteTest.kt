@@ -17,13 +17,13 @@ import javax.sql.DataSource
 
 object AdminRouteTest : AppSpek({
 
-    describe("Initial mock data bootstrap - POST /admin/bootstrap") {
+    describe("Initial mock data bootstrap - POST /api/v1/admin/bootstrap") {
         it("should return HTTP 200 OK and data must be initialized") {
             withApp {
                 val departmentDao by application.inject<DepartmentDao>()
                 val employeeDao by application.inject<EmployeeDao>()
                 val dataSource by application.inject<DataSource>()
-                handleRequest(HttpMethod.Post, "/admin/bootstrap") {
+                handleRequest(HttpMethod.Post, "/api/v1/admin/bootstrap") {
                     addHeader(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 }.apply {
                     response.status() `should equal` HttpStatusCode.NoContent

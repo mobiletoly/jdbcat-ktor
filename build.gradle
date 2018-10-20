@@ -71,7 +71,7 @@ dependencies {
 
 // --- Run "./gradle shadowJar" to generate fat jar with all dependencies
 shadowJar {
-    baseName = 'marketplace-backend'
+    baseName = 'jdbcat-ktor-backend'
     classifier = null
     version = null
 }

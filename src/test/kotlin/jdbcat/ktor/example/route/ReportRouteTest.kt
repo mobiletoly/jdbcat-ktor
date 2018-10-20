@@ -17,7 +17,7 @@ object ReportRouteTest : AppSpek({
         context("when has valid query arguments") {
             it("should return report") {
                 withApp {
-                    handleRequest(HttpMethod.Post, "/admin/bootstrap").apply {
+                    handleRequest(HttpMethod.Post, "/api/v1/admin/bootstrap").apply {
                         response.status() `should equal` HttpStatusCode.NoContent
                     }
                     handleRequest(
