@@ -128,6 +128,7 @@ private fun Application.bootstrapRest() {
             application.log.debug(it.call.request.headers.toMap().toString())
         }
 
+        // Comment it out if you are not planning to use Frontend code
         static("frontend") {
             resources("frontend")
         }
