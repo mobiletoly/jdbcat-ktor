@@ -1,4 +1,5 @@
 import * as React from "react";
+import axios, { AxiosRequestConfig, AxiosPromise } from 'axios';
 
 export interface HelloProps { compiler: string; framework: string; }
 

@@ -117,18 +117,26 @@ and select **Spek 2 - JVM**. You can leave all fields empty but select `jdbcat-k
 
 ## Frontend
 
-Go to ./frontend directory and run
+Go to `./frontend` directory and run
 
 ```bash
 $ npm install
 ```
 to perform initial installation
 
-When you want to initiate continuous compilation - you can run 
+Then install parcel (https://parceljs.org/):
 ```bash
-$ npx webpack --watch
+$ npm install --global parcel-bundler
 ```
-it will ensure that all your changes to frontend source code in ./frontend/src directory will be automatically
-compiled and copied to Kotlin's `./src/main/resources/frontend` directory where it will be accessible by ktor.
+
+When you want to initiate continuous compilation - you should run 
+```bash
+$ parcel watch index.html --out-dir ../src/main/resources/frontend --public-url /frontend
+```
+it will ensure that all your changes to frontend source code in `/frontend/src` directory will be automatically
+compiled and copied to Kotlin's `/src/main/resources/frontend` directory where it will be accessible by ktor.
 You still have to invoke "Build / Build Project" in IntelliJ in order for auto-compiled files to end-up in JAR file,
 usually no server restart is required, Hot Reload should take care of that.
+
+Note: Don't edit files inside `/src/main/resources/frontend` directory, they will be discarded and overriden by
+code from `/frontend/src`
