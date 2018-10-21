@@ -29,7 +29,7 @@ and some other misc stuff:
 - **jacoco** for code coverage metrics
 
 and for frontend (optional, if you need frontend to be deployed with your service)
-- **React JS** + **Typescript**
+- **React JS 16.5** + **Typescript 3.1**
 
 # Setup
 
@@ -120,23 +120,23 @@ and select **Spek 2 - JVM**. You can leave all fields empty but select `jdbcat-k
 Go to `./frontend` directory and run
 
 ```bash
-$ npm install
+$ yarn install
 ```
 to perform initial installation
 
-Then install parcel (https://parceljs.org/):
+We use Parcel (https://parceljs.org/) instead of WebPack, so please install it:
 ```bash
-$ npm install --global parcel-bundler
+$ yarn global add parcel-bundler
 ```
 
 When you want to initiate continuous compilation - you should run 
 ```bash
-$ parcel watch index.html --out-dir ../src/main/resources/frontend --public-url /frontend
+$ yarn watch
 ```
 it will ensure that all your changes to frontend source code in `/frontend/src` directory will be automatically
 compiled and copied to Kotlin's `/src/main/resources/frontend` directory where it will be accessible by ktor.
 You still have to invoke "Build / Build Project" in IntelliJ in order for auto-compiled files to end-up in JAR file,
 usually no server restart is required, Hot Reload should take care of that.
 
-Note: Don't edit files inside `/src/main/resources/frontend` directory, they will be discarded and overriden by
+Note: Don't edit files inside `/src/main/resources/frontend` directory, they will be discarded and overridden by
 code from `/frontend/src`
