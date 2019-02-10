@@ -29,8 +29,8 @@ object AdminRouteTest : AppSpek({
                     response.status() `should equal` HttpStatusCode.NoContent
                     val numEmployees = dataSource.tx { employeeDao.countAll() }
                     val numDepartments = dataSource.tx { departmentDao.countAll() }
-                    numEmployees `should be` 5
-                    numDepartments `should be` 4
+                    numEmployees `should equal` 5
+                    numDepartments `should equal` 4
                 }
             }
         }

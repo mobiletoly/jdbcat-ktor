@@ -2,6 +2,7 @@ package jdbcat.ktor.example.db.dao
 
 import jdbcat.core.EphemeralTable
 import jdbcat.core.asSequence
+import jdbcat.core.integer
 import jdbcat.core.singleRow
 import jdbcat.core.singleRowOrNull
 import jdbcat.core.sqlAssignNamesToValues

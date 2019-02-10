@@ -9,7 +9,7 @@ import io.ktor.server.testing.withTestApplication
 import jdbcat.core.tx
 import jdbcat.ktor.example.db.dao.DepartmentDao
 import jdbcat.ktor.example.db.dao.EmployeeDao
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import org.koin.core.KoinContext
 import org.koin.ktor.ext.installKoin
 import org.koin.log.Logger.SLF4JLogger

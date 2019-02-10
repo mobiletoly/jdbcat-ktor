@@ -29,7 +29,7 @@ import jdbcat.ktor.example.route.v1.adminRoute
 import jdbcat.ktor.example.route.v1.departmentRoute
 import jdbcat.ktor.example.route.v1.employeeRoute
 import jdbcat.ktor.example.route.v1.reportRoute
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.koin.ktor.ext.inject
 import java.util.UUID

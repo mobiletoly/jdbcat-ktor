@@ -44,7 +44,7 @@ object EmployeesRouteTest : AppSpek({
                     }.apply {
                         response.status() `should equal` HttpStatusCode.OK
                         val list = jacksonMapper.readValue<List<EmployeeResponse>>(response.content!!)
-                        list.size `should be` 2
+                        list.size `should equal` 2
                         val response1 = list.find { it.id == employee1.id }!!
                         response1 sameAs employee1
                         val response2 = list.find { it.id == employee2.id }!!
