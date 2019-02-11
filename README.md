@@ -7,6 +7,7 @@ We are building a basic REST service to manage Departments and Employees entitie
 You are landed to the right repository if you want to take a look at REST service template built on top of:
 
 - **gradle** - no comments
+- **kotlin 1.3** - no comments
 - **ktor** for creating web application: https://github.com/ktorio/ktor
 - **JDBCat** to access database: https://github.com/mobiletoly/jdbcat
   (if you want to replace it with ExposedSQL - we will have another example for that, but for now we want to
