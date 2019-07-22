@@ -9,7 +9,6 @@ import jdbcat.core.tx
 import jdbcat.ktor.example.AppSpek
 import jdbcat.ktor.example.db.dao.DepartmentDao
 import jdbcat.ktor.example.db.dao.EmployeeDao
-import org.amshove.kluent.`should be`
 import org.amshove.kluent.`should equal`
 import org.koin.ktor.ext.inject
 import org.spekframework.spek2.style.specification.describe

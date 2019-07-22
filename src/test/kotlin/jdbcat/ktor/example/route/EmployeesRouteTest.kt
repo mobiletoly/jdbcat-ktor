@@ -15,7 +15,6 @@ import jdbcat.ktor.example.db.model.Employee
 import jdbcat.ktor.example.route.v1.model.AddEmployeeRequest
 import jdbcat.ktor.example.route.v1.model.EmployeeResponse
 import jdbcat.ktor.example.route.v1.model.UpdateEmployeeRequest
-import org.amshove.kluent.`should be`
 import org.amshove.kluent.`should equal`
 import org.koin.ktor.ext.inject
 import org.spekframework.spek2.style.specification.describe

@@ -58,6 +58,14 @@ $ docker run --name localpostgres -d -p 5432:5432 -e POSTGRES_PASSWORD=postgress
 this will create and run a local instance of PostgreSQL database with user name "postgres" and
 password "postgresspass".
 
+Or use
+
+```bash
+$ docker start localpostgres
+```
+
+if localpostgres container is already created. 
+
 ## Run application
 
 There are few different ways how you can start jdbcat-ktor app. Easiest way is to use gradle

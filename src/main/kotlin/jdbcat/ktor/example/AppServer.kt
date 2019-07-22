@@ -2,9 +2,10 @@ package jdbcat.ktor.example
 
 import com.typesafe.config.ConfigFactory
 import io.ktor.application.Application
+import io.ktor.application.install
 import mu.KotlinLogging
-import org.koin.ktor.ext.installKoin
-import org.koin.log.Logger.SLF4JLogger
+import org.koin.Logger.SLF4JLogger
+import org.koin.ktor.ext.Koin
 
 // All REST calls must specify version, e.g. http://localhost/api/v1/healthcheck
 const val serviceApiVersionV1 = "api/v1"
@@ -20,11 +21,11 @@ fun Application.main() {
 
     val mainConfig = ConfigFactory.load("main.conf")
     // Add Koin DI support to Ktor
-    installKoin(
-        listOf(appModule),
-        extraProperties = mapOf("mainConfig" to mainConfig),
-        logger = SLF4JLogger()
-    )
+    install(Koin) {
+        SLF4JLogger()
+        modules(appModule)
+        properties(mapOf("mainConfig" to mainConfig))
+    }
 
     // Initial bootstrap
     bootstrap()

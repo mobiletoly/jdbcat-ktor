@@ -4,16 +4,16 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.typesafe.config.ConfigFactory
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
+import io.ktor.application.install
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.withTestApplication
 import jdbcat.core.tx
 import jdbcat.ktor.example.db.dao.DepartmentDao
 import jdbcat.ktor.example.db.dao.EmployeeDao
 import kotlinx.coroutines.runBlocking
-import org.koin.core.KoinContext
-import org.koin.ktor.ext.installKoin
-import org.koin.log.Logger.SLF4JLogger
-import org.koin.standalone.StandAloneContext
+import org.koin.Logger.SLF4JLogger
+import org.koin.ktor.ext.Koin
+import org.koin.ktor.ext.get
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.dsl.Root
 import org.testcontainers.containers.PostgreSQLContainer
@@ -32,19 +32,6 @@ abstract class AppSpek(val appRoot: Root.() -> Unit) : Spek({
         }
     }
 
-    afterEachTest {
-        val dataSource = (StandAloneContext.koinContext as KoinContext).get<DataSource>()
-        val employeeDao = (StandAloneContext.koinContext as KoinContext).get<EmployeeDao>()
-        val departmentDao = (StandAloneContext.koinContext as KoinContext).get<DepartmentDao>()
-        runBlocking {
-            dataSource.tx {
-                employeeDao.dropTableIfExists()
-                departmentDao.dropTableIfExists()
-            }
-        }
-        (dataSource as HikariDataSource).close()
-    }
-
     appRoot()
 }) {
     companion object {
@@ -57,6 +44,16 @@ abstract class AppSpek(val appRoot: Root.() -> Unit) : Spek({
             runBlocking {
                 initApp(application)
                 test.invoke(this@withTestApplication)
+
+                // Clean-up after each test
+                val employeeDao = application.get<EmployeeDao>()
+                val departmentDao = application.get<DepartmentDao>()
+                val dataSource = application.get<DataSource>()
+                dataSource.tx {
+                    employeeDao.dropTableIfExists()
+                    departmentDao.dropTableIfExists()
+                }
+                (dataSource as HikariDataSource).close()
             }
         }
 
@@ -71,11 +68,11 @@ abstract class AppSpek(val appRoot: Root.() -> Unit) : Spek({
             }
             val config = ConfigFactory.parseProperties(mainConfigProperties)
 
-            application.installKoin(
-                listOf(appModule),
-                extraProperties = mapOf("mainConfig" to config),
-                logger = SLF4JLogger()
-            )
+            application.install(Koin) {
+                SLF4JLogger()
+                modules(appModule)
+                properties(mapOf("mainConfig" to config))
+            }
             application.bootstrap()
         }
     }
