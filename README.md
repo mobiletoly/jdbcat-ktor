@@ -1,3 +1,7 @@
+For more up-to-date example please take a look at:
+https://github.com/mobiletoly/ktor-hexagonal-multimodule
+
+
 # What do we build?
 
 We are building a basic REST service to manage Departments and Employees entities with **ktor** framework.
